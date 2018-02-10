@@ -1,51 +1,41 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # ----------------------------------------------------------------------------
 # This script runs the emulator. At first it's search for emul.sh in the
 # project folder. If it's found - call it, otherwise it will search for
 # .sna/.spg/.trd/.scl/.tap and call EMUL with it.
+# If no emul.sh file is found, it'll try to call make with 'run' target.
 # Current directory at entry to this script is asm-file's directory.
 # There are two input parameters:
 #   1. filename (without path),
-#   2. project file path.
+#   2. project file path. (empty)
 # ----------------------------------------------------------------------------
 
-EMUL=unreal
 
-# Get file name without extension
-NAME=${1%.*}
+# check if local run file exists and is executable
+EMUL="./emul.sh"
+if [ -x $EMUL ]; then
+	echo found $EMUL
 
-# Run external script from project folder if exists
-if [ -f "$2/emul.sh" ]
-then
-    cd "$2"
-    emul.sh "$1" "$2"
+	# remove filename extension
+	# https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+	BASENAME="${1%.*}"
+	# check if any of this extensions exists and call emul.sh with it.
+	for ext in "sna" "spg" "trd" "scl" "tap"; do
+		IMAGE="$BASENAME.$ext"
+		if [ -e $IMAGE ]; then
+			echo exec $EMUL $IMAGE
+			exec $EMUL $IMAGE
+		fi
+	done
 
-# Check if .sna file exists
-elif [ -f "$NAME.sna" ]
-then
-    "$EMUL" "$NAME.sna"
+	# no image found. exec without parameters
+	echo exec $EMUL
+	exec $EMUL
+fi
 
-# Check if .spg file exists
-elif [ -f "$NAME.spg" ]
-then
-    "$EMUL" "$NAME.spg"
 
-# Check if .trd file exists
-elif [ -f "$NAME.trd" ]
-then
-    "$EMUL" "$NAME.trd"
 
-# Check if .scl file exists
-elif [ -f "$NAME.scl" ]
-then
-    "$EMUL" "$NAME.scl"
-
-# Check if .tap file exists
-elif [ -f "$NAME.tap" ]
-then
-    "$EMUL" "$NAME.tap"
-
-else
-    echo No image file found!
-
+# last but not least, check makefile run target
+if [ -e "Makefile" ] || [ -e "makefile" ]; then
+	exec make run
 fi

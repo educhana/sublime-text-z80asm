@@ -1,11 +1,4 @@
-#!/bin/sh
-
-DIR=${0%buildrun.sh}
-
-"${DIR}build.sh" "$1" "$2"
-
-if [ "$?" -eq "0" ]
-then
-    "${DIR}run.sh" "$1" "$2"
-
-fi
+#!/usr/bin/env bash
+# call build && run scripts
+THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
+"$THIS_DIR/build.sh" "$1" "$2" && "$THIS_DIR/run.sh" "$1" "$2"
